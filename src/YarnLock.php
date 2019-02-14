@@ -1,7 +1,6 @@
 <?php
 namespace Mindscreen\YarnLock;
 
-
 class YarnLock
 {
 
@@ -82,8 +81,10 @@ class YarnLock
                     $field = Package::getDependencyField($dependencyType);
                     if (isset($data->$field)) {
                         foreach ($data->$field as $dependencyName => $dependencyVersion) {
-                            $dependencyPackage = $packageVersionMap[$dependencyName][$dependencyVersion]['package'];
-                            $package->addDependency($dependencyPackage, $dependencyType);
+                            if (isset($packageVersionMap[$dependencyName][$dependencyVersion]['package'])) {
+                                $dependencyPackage = $packageVersionMap[$dependencyName][$dependencyVersion]['package'];
+                                $package->addDependency($dependencyPackage, $dependencyType);
+                            }
                         }
                     }
                 }
@@ -117,7 +118,7 @@ class YarnLock
      */
     public function getPackagesByName($packageName)
     {
-        return array_values(array_filter($this->packages, function(Package $package) use ($packageName) {
+        return array_values(array_filter($this->packages, function (Package $package) use ($packageName) {
             return $package->getName() === $packageName;
         }));
     }
@@ -136,7 +137,7 @@ class YarnLock
         if ($end === 0 || ($end !== null && $end < $start)) {
             $end = $start + 1;
         }
-        return array_values(array_filter($this->packages, function(Package $package) use ($start, $end) {
+        return array_values(array_filter($this->packages, function (Package $package) use ($start, $end) {
             $depth = $package->getDepth();
             if ($depth === null) {
                 return $end === null;
@@ -154,7 +155,7 @@ class YarnLock
     public function getDepth()
     {
         $this->calculateDepth();
-        return array_reduce($this->packages, function($d, Package $package) {
+        return array_reduce($this->packages, function ($d, Package $package) {
             return max($d, $package->getDepth());
         }, 0) + 1;
     }
@@ -215,7 +216,7 @@ class YarnLock
             return;
         }
         if ($root === null) {
-            $root = array_values(array_filter($this->packages, function(Package $p) {
+            $root = array_values(array_filter($this->packages, function (Package $p) {
                 return count($p->getResolves()) === 0;
             }));
         }
@@ -230,7 +231,8 @@ class YarnLock
      * @param Package $node
      * @param int $depth
      */
-    protected function calculateChildDepth(Package $node, $depth) {
+    protected function calculateChildDepth(Package $node, $depth)
+    {
         if ($node->getDepth() !== null && $node->getDepth() <= $depth) {
             return;
         }
